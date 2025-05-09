@@ -173,6 +173,7 @@ global:
     mir::Server::override_the_input_targeter*;
     mir::Server::override_the_logger*;
     mir::Server::override_the_persistent_surface_store*;
+    mir::Server::override_the_pointer_input_dispatcher*;
     mir::Server::override_the_prompt_session_listener*;
     mir::Server::override_the_prompt_session_manager*;
     mir::Server::override_the_renderer_factory*;
@@ -203,6 +204,7 @@ global:
     mir::Server::the_decoration_strategy*;
     mir::Server::the_display*;
     mir::Server::the_display_configuration_controller*;
+    mir::Server::the_display_configuration_observer*;
     mir::Server::the_display_configuration_observer_registrar*;
     mir::Server::the_display_platforms*;
     mir::Server::the_focus_controller*;
@@ -214,6 +216,7 @@ global:
     mir::Server::the_logger*;
     mir::Server::the_main_loop*;
     mir::Server::the_persistent_surface_store*;
+    mir::Server::the_pointer_input_dispatcher*;
     mir::Server::the_prompt_session_listener*;
     mir::Server::the_prompt_session_manager*;
     mir::Server::the_renderer_factory*;
@@ -375,8 +378,8 @@ global:
     mir::input::InputEventTransformer::InputEventTransformer*;
     mir::input::InputEventTransformer::Transformer::?Transformer*;
     mir::input::InputEventTransformer::append*;
-    mir::input::InputEventTransformer::handle*;
     mir::input::InputEventTransformer::remove*;
+    mir::input::InputEventTransformer::transform*;
     mir::input::InputManager::?InputManager*;
     mir::input::InputManager::InputManager*;
     mir::input::InputManager::operator*;
@@ -492,6 +495,7 @@ global:
     mir::scene::NullSurfaceObserver::reception_mode_set_to*;
     mir::scene::NullSurfaceObserver::renamed*;
     mir::scene::NullSurfaceObserver::rescale_output*;
+    mir::scene::NullSurfaceObserver::tiled_edges*;
     mir::scene::NullSurfaceObserver::transformation_set_to*;
     mir::scene::NullSurfaceObserver::window_resized_to*;
     mir::scene::Observer::?Observer*;
@@ -882,7 +886,6 @@ global:
     non-virtual?thunk?to?mir::input::InputDispatcher::?InputDispatcher*;
     non-virtual?thunk?to?mir::input::InputEventTransformer::?InputEventTransformer*;
     non-virtual?thunk?to?mir::input::InputEventTransformer::Transformer::?Transformer*;
-    non-virtual?thunk?to?mir::input::InputEventTransformer::handle*;
     non-virtual?thunk?to?mir::input::InputManager::?InputManager*;
     non-virtual?thunk?to?mir::input::KeyboardObserver::?KeyboardObserver*;
     non-virtual?thunk?to?mir::input::Scene::?Scene*;
@@ -957,6 +960,7 @@ global:
     non-virtual?thunk?to?mir::scene::NullSurfaceObserver::reception_mode_set_to*;
     non-virtual?thunk?to?mir::scene::NullSurfaceObserver::renamed*;
     non-virtual?thunk?to?mir::scene::NullSurfaceObserver::rescale_output*;
+    non-virtual?thunk?to?mir::scene::NullSurfaceObserver::tiled_edges*;
     non-virtual?thunk?to?mir::scene::NullSurfaceObserver::transformation_set_to*;
     non-virtual?thunk?to?mir::scene::NullSurfaceObserver::window_resized_to*;
     non-virtual?thunk?to?mir::scene::Observer::?Observer*;
@@ -1414,3 +1418,4 @@ global:
   };
 local: *;
 };
+
