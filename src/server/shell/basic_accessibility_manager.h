@@ -31,11 +31,8 @@ class Cursor;
 }
 namespace input
 {
+class CompositeEventFilter;
 class InputEventTransformer;
-}
-namespace shell
-{
-class MouseKeysTransformer;
 }
 namespace options
 {
@@ -47,6 +44,7 @@ class Clock;
 }
 namespace shell
 {
+class MouseKeysTransformer;
 class BasicAccessibilityManager : public AccessibilityManager
 {
 public:
@@ -60,10 +58,7 @@ public:
 
     std::optional<int> repeat_rate() const override;
     int repeat_delay() const override;
-    void repeat_rate(int new_rate) override;
-    void repeat_delay(int new_rate) override;
-
-    void notify_helpers() const override;
+    void repeat_rate_and_delay(std::optional<int> new_rate, std::optional<int> new_delay) override;
 
     void cursor_scale(float new_scale) override;
 
@@ -73,12 +68,15 @@ public:
     void max_speed(double x_axis, double y_axis) override;
 
 private:
+    class MousekeyPointer;
+
     struct MutableState {
         // 25 rate and 600 delay are the default in Weston and Sway
         int repeat_rate{25};
         int repeat_delay{600};
 
         std::vector<std::shared_ptr<shell::KeyboardHelper>> keyboard_helpers;
+        std::shared_ptr<MousekeyPointer> mousekey_pointer;
     };
 
     Synchronised<MutableState> mutable_state;
