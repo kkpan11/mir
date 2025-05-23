@@ -22,6 +22,8 @@
 #include "mir/input/mousekeys_keymap.h"
 #include "mir/synchronised.h"
 
+#include <atomic>
+
 namespace mir
 {
 class MainLoop;
@@ -31,11 +33,8 @@ class Cursor;
 }
 namespace input
 {
+class CompositeEventFilter;
 class InputEventTransformer;
-}
-namespace shell
-{
-class MouseKeysTransformer;
 }
 namespace options
 {
@@ -47,6 +46,7 @@ class Clock;
 }
 namespace shell
 {
+class MouseKeysTransformer;
 class BasicAccessibilityManager : public AccessibilityManager
 {
 public:
@@ -60,10 +60,7 @@ public:
 
     std::optional<int> repeat_rate() const override;
     int repeat_delay() const override;
-    void repeat_rate(int new_rate) override;
-    void repeat_delay(int new_rate) override;
-
-    void notify_helpers() const override;
+    void repeat_rate_and_delay(std::optional<int> new_rate, std::optional<int> new_delay) override;
 
     void cursor_scale(float new_scale) override;
 
@@ -81,12 +78,32 @@ private:
         std::vector<std::shared_ptr<shell::KeyboardHelper>> keyboard_helpers;
     };
 
+    template <typename Transformer> class Registration
+    {
+    public:
+        Registration(
+            std::shared_ptr<Transformer> const& transformer,
+            std::shared_ptr<input::InputEventTransformer> const& event_transformer);
+
+        void add_registration() const;
+        void remove_registration() const;
+
+        Transformer* operator->() const noexcept;
+
+    private:
+        Registration(Registration const&) = delete;
+        Registration& operator=(Registration const&) = delete;
+
+        std::shared_ptr<Transformer> const transformer;
+        std::shared_ptr<input::InputEventTransformer> const event_transformer;
+        std::atomic<bool> mutable registered{false};
+    };
+
     Synchronised<MutableState> mutable_state;
 
     bool const enable_key_repeat;
     std::shared_ptr<graphics::Cursor> const cursor;
-    std::shared_ptr<mir::input::InputEventTransformer> const event_transformer;
-    std::shared_ptr<mir::shell::MouseKeysTransformer> const transformer;
+    Registration<MouseKeysTransformer> const transformer;
 };
 }
 }

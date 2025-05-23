@@ -20,14 +20,17 @@
 #include "mir/input/input_device_hub.h"
 #include "mir/input/input_device_registry.h"
 #include "mir/input/input_event_transformer.h"
+#include "mir/input/virtual_input_device.h"
 #include "src/server/input/default_input_device_hub.h"
 
+#include "mir/test/doubles/advanceable_clock.h"
 #include "mir/test/doubles/mock_input_seat.h"
 #include "mir/test/doubles/mock_key_mapper.h"
 #include "mir/test/doubles/mock_led_observer_registrar.h"
 #include "mir/test/doubles/mock_server_status_listener.h"
-#include "mir/test/doubles/advanceable_clock.h"
 #include "mir/test/fake_shared.h"
+#include "mir/test/fd_utils.h"
+#include "mir/test/signal.h"
 
 #include <functional>
 #include <gtest/gtest.h>
@@ -45,22 +48,23 @@ using namespace testing;
 struct TestInputEventTransformer : testing::Test
 {
     mir::dispatch::MultiplexingDispatchable multiplexer;
-    NiceMock<mtd::MockLedObserverRegistrar> led_observer_registrar;
     NiceMock<mtd::MockInputSeat> mock_seat;
-    NiceMock<mtd::MockKeyMapper> mock_key_mapper;
-    NiceMock<mtd::MockServerStatusListener> mock_server_status_listener;
     mtd::AdvanceableClock clock;
 
-    TestInputEventTransformer() :
-        input_device_hub{std::make_shared<mir::input::DefaultInputDeviceHub>(
-            mt::fake_shared(mock_seat),
-            mt::fake_shared(multiplexer),
-            mt::fake_shared(clock),
-            mt::fake_shared(mock_key_mapper),
-            mt::fake_shared(mock_server_status_listener),
-            mt::fake_shared(led_observer_registrar))},
-        input_event_transformer{input_device_hub, std::make_shared<mir::GLibMainLoop>(mt::fake_shared(clock))}
+    void SetUp() override
     {
+        expect_and_execute_multiplexer();
+    }
+
+    void TearDown() override
+    {
+    }
+
+    // Borrowed from `test_single_seat_setup.cpp`
+    void expect_and_execute_multiplexer()
+    {
+        mt::fd_becomes_readable(multiplexer.watch_fd(), std::chrono::milliseconds(100));
+        multiplexer.dispatch(mir::dispatch::FdEvent::readable);
     }
 
     mir::EventUPtr make_key_event()
@@ -74,8 +78,7 @@ struct TestInputEventTransformer : testing::Test
             mir_input_event_modifier_none);
     }
 
-    std::shared_ptr<mir::input::DefaultInputDeviceHub> const input_device_hub;
-    mir::input::InputEventTransformer input_event_transformer;
+    mir::input::InputEventTransformer input_event_transformer{mt::fake_shared(mock_seat), mt::fake_shared(clock)};
 };
 
 struct MockTransformer : public mir::input::InputEventTransformer::Transformer
@@ -87,19 +90,6 @@ struct MockTransformer : public mir::input::InputEventTransformer::Transformer
         (override));
 };
 
-TEST_F(TestInputEventTransformer, virtual_input_device_exists)
-{
-    auto mousekey_pointer_found = false;
-    input_device_hub->for_each_input_device(
-        [&mousekey_pointer_found](mir::input::Device const& dev)
-        {
-            if (dev.name() == "mousekey-pointer")
-                mousekey_pointer_found = true;
-        });
-
-    ASSERT_TRUE(mousekey_pointer_found);
-}
-
 TEST_F(TestInputEventTransformer, transformer_gets_called)
 {
     auto mock_transformer = std::make_shared<MockTransformer>();
@@ -107,7 +97,7 @@ TEST_F(TestInputEventTransformer, transformer_gets_called)
 
     input_event_transformer.append(mock_transformer);
 
-    input_event_transformer.handle(*make_key_event());
+    input_event_transformer.transform(*make_key_event(), nullptr, [](auto) {});
 }
 
 TEST_F(TestInputEventTransformer, events_block_correctly)
@@ -126,7 +116,7 @@ TEST_F(TestInputEventTransformer, events_block_correctly)
     input_event_transformer.append(mock_transformer_1);
     input_event_transformer.append(mock_transformer_2);
 
-    input_event_transformer.handle(*make_key_event());
+    input_event_transformer.transform(*make_key_event(), nullptr, [](auto) {});
 }
 
 TEST_F(TestInputEventTransformer, events_cascade_correctly)
@@ -145,7 +135,7 @@ TEST_F(TestInputEventTransformer, events_cascade_correctly)
     input_event_transformer.append(mock_transformer_1);
     input_event_transformer.append(mock_transformer_2);
 
-    input_event_transformer.handle(*make_key_event());
+    input_event_transformer.transform(*make_key_event(), nullptr, [](auto) {});
 }
 
 TEST_F(TestInputEventTransformer, transformer_not_called_after_removal)
@@ -160,9 +150,9 @@ TEST_F(TestInputEventTransformer, transformer_not_called_after_removal)
             });
 
     input_event_transformer.append(mock_transformer);
-    input_event_transformer.handle(*make_key_event());
+    input_event_transformer.transform(*make_key_event(), nullptr, [](auto) {});
     input_event_transformer.remove(mock_transformer);
-    input_event_transformer.handle(*make_key_event());
+    input_event_transformer.transform(*make_key_event(), nullptr, [](auto) {});
 }
 
 TEST_F(TestInputEventTransformer, removing_a_valid_transformer_returns_true)
@@ -175,7 +165,7 @@ TEST_F(TestInputEventTransformer, removing_a_valid_transformer_returns_true)
     input_event_transformer.append(mock_transformer_1);
     input_event_transformer.append(mock_transformer_2);
     ASSERT_TRUE(input_event_transformer.remove(mock_transformer_1));
-    input_event_transformer.handle(*make_key_event());
+    input_event_transformer.transform(*make_key_event(), nullptr, [](auto) {});
 }
 
 TEST_F(TestInputEventTransformer, removing_a_transformer_that_was_not_returns_false)
@@ -191,6 +181,6 @@ TEST_F(TestInputEventTransformer, adding_transformer_twice_has_no_effect_on_expe
 
     input_event_transformer.append(mock_transformer_1);
     input_event_transformer.append(mock_transformer_1);
-    input_event_transformer.handle(*make_key_event());
+    input_event_transformer.transform(*make_key_event(), nullptr, [](auto) {});
 }
 

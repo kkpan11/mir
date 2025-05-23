@@ -21,6 +21,7 @@
 #include "mir/input/surface.h"
 #include "mir/frontend/surface.h"
 #include "mir/compositor/compositor_id.h"
+#include "mir/flags.h"
 #include "mir/optional_value.h"
 #include "mir/observer_registrar.h"
 #include "surface_state_tracker.h"
@@ -110,6 +111,7 @@ public:
     virtual int query(MirWindowAttrib attrib) const = 0;
 
     virtual void rename(std::string const& title) = 0;
+    virtual std::list<StreamInfo> get_streams() const = 0;
     virtual void set_streams(std::list<StreamInfo> const& streams) = 0;
 
     virtual void set_confine_pointer_state(MirPointerConfinementState state) = 0;
@@ -156,6 +158,13 @@ public:
     ///@{
     virtual auto focus_mode() const -> MirFocusMode = 0;
     virtual void set_focus_mode(MirFocusMode focus_mode) = 0;
+    ///@}
+
+    /// Used when the surface is in a tiled layout to describe the
+    /// edges that are touching another part of the tiling grid.
+    /// @{
+    virtual auto tiled_edges() const -> Flags<MirTiledEdge> = 0;
+    virtual void set_tiled_edges(Flags<MirTiledEdge> flags) = 0;
     ///@}
 };
 }

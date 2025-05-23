@@ -129,6 +129,17 @@ public:
         runner.add_start_callback([this]
             {
                 std::lock_guard lock{config_mutex};
+
+                // Merge the input options collected from the command line,
+                // environment, and default `.config` file with the options we
+                // read from the `.input` file.
+                //
+                // In this case, the `.input` file takes precedence. You can
+                // reverse the arguments to de-prioritize it.
+                mouse.merge(input_configuration.mouse());
+                keyboard.merge(input_configuration.keyboard());
+                touchpad.merge(input_configuration.touchpad());
+
                 apply_config();
             });
     }
@@ -246,7 +257,6 @@ try
 {
     miral::MirRunner runner{argc, argv, "mir/mir_demo_server.config"};
 
-    miral::CursorScale cursor_scale;
     DemoConfigFile demo_configuration{runner, "mir_demo_server.live-config"};
     runner.set_exception_handler(exception_handler);
 

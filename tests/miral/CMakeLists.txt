@@ -35,6 +35,7 @@ mir_add_wrapped_executable(miral-test-internal NOINSTALL
     modify_window_state.cpp
     modify_window_specification.cpp
     display_reconfiguration.cpp
+    display_configuration.cpp
     raise_tree.cpp
     static_display_config.cpp
     test_window_manager_tools.cpp           test_window_manager_tools.h
@@ -51,6 +52,7 @@ mir_add_wrapped_executable(miral-test-internal NOINSTALL
     focus_mode.cpp
     fd_manager.cpp
     application_selector.cpp
+    test_input_configuration.cpp
     test_mousekeys_config.cpp
     ${MIRAL_TEST_SOURCES}
 )
@@ -91,6 +93,11 @@ target_link_libraries(miral-test
 option(MIR_RUN_MIRAL_TESTS "Run miral tests as part of testsuite" ON)
 
 if(MIR_RUN_MIRAL_TESTS)
+    set(MIR_EXCLUDE_TESTS
+      TestConfigFile.*
+    )
     mir_discover_tests_with_fd_leak_detection(miral-test)
+    
+    set(MIR_EXCLUDE_TESTS)
     mir_discover_tests_with_fd_leak_detection(miral-test-internal)
 endif()

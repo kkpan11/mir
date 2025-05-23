@@ -33,13 +33,14 @@ template<class Observer>
 class ObserverRegistrar;
 
 namespace compositor { class Compositor; class DisplayBufferCompositorFactory; class CompositorReport; }
-namespace graphics { class Cursor; class DisplayPlatform; class RenderingPlatform; class Display; class GLConfig; class DisplayConfigurationPolicy; class DisplayConfigurationObserver; }
+namespace graphics { class Cursor; class DisplayPlatform; class RenderingPlatform; class Display; class GLConfig; class DisplayConfigurationPolicy; class DisplayConfigurationObserver; class GraphicBufferAllocator; class CursorImage; }
 namespace input { class CompositeEventFilter; class InputDispatcher; class CursorListener; class CursorImages; class TouchVisualizer; class InputDeviceHub; class InputDeviceRegistry;}
 namespace logging { class Logger; }
 namespace options { class Option; }
 namespace frontend
 {
 class SessionAuthorizer;
+class PointerInputDispatcher;
 }
 namespace shell
 {
@@ -64,6 +65,7 @@ class SessionCoordinator;
 class SurfaceFactory;
 class Session;
 class SessionLock;
+class SceneReport;
 }
 namespace input
 {
@@ -272,6 +274,9 @@ public:
     void override_the_logger(Builder<logging::Logger> const& logger_builder);
 
     /// Sets an override functor for creating the prompt session listener.
+    void override_the_pointer_input_dispatcher(Builder<frontend::PointerInputDispatcher> const& pointer_input_dispatcher_builder);
+
+    /// Sets an override functor for creating the prompt session listener.
     void override_the_prompt_session_listener(Builder<scene::PromptSessionListener> const& prompt_session_listener_builder);
 
     /// Sets an override functor for creating the prompt session manager.
@@ -379,6 +384,9 @@ public:
     /// \return the main loop.
     auto the_main_loop() const -> std::shared_ptr<MainLoop>;
 
+    /// \return the pointer input dispatcher.
+    auto the_pointer_input_dispatcher() const -> std::shared_ptr<frontend::PointerInputDispatcher>;
+
     /// \return the prompt session listener.
     auto the_prompt_session_listener() const -> std::shared_ptr<scene::PromptSessionListener>;
 
@@ -422,6 +430,10 @@ public:
     /// \return a registrar to add and remove DisplayConfigurationChangeObservers
     auto the_display_configuration_observer_registrar() const ->
         std::shared_ptr<ObserverRegistrar<graphics::DisplayConfigurationObserver>>;
+
+    /// \return the DisplayConfigurationObserver
+    auto the_display_configuration_observer() const ->
+        std::shared_ptr<graphics::DisplayConfigurationObserver>;
 
     /// \return a registrar to add and remove SeatObservers
     auto the_seat_observer_registrar() const ->
@@ -490,6 +502,12 @@ public:
 
     auto the_decoration_strategy() const -> std::shared_ptr<DecorationStrategy>;
     void set_the_decoration_strategy(std::shared_ptr<DecorationStrategy> strategy);
+
+    auto the_buffer_allocator() const -> std::shared_ptr<graphics::GraphicBufferAllocator>;
+
+    auto the_default_cursor_image() const -> std::shared_ptr<graphics::CursorImage>;
+
+    auto the_scene_report() const -> std::shared_ptr<scene::SceneReport>;
 private:
     struct ServerConfiguration;
     struct Self;
